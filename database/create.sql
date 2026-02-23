@@ -1,4 +1,4 @@
--- Удаление таблиц если существуют (в правильном порядке из-за внешних ключей)
+-- Удаление таблиц если существуют
 DROP TABLE IF EXISTS performance_actor CASCADE;
 DROP TABLE IF EXISTS performance CASCADE;
 DROP TABLE IF EXISTS person CASCADE;
