@@ -10,7 +10,7 @@
     
     <property name="sql.create" value="create.sql"/>
     <property name="sql.init" value="init.sql"/>
-    <property name="postgresql.jar" value="../lib/postgresql-42.6.0.jar"/>
+    <property name="postgresql.jar" value="../lib/postgresql-42.7.1.jar"/>
     
     <!-- Путь к JDBC драйверу PostgreSQL -->
     <path id="postgresql.classpath">
