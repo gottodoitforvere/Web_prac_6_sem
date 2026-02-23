@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="theater-box-office" default="help" basedir=".">
+    
+    <!-- Параметры подключения к PostgreSQL -->
+    <property name="db.host" value="localhost"/>
+    <property name="db.port" value="5432"/>
+    <property name="db.name" value="theater"/>
+    <property name="db.user" value="postgres"/>
+    <property name="db.password" value="password"/>
+    
+    <property name="sql.create" value="create.sql"/>
+    <property name="sql.init" value="init.sql"/>
+    <property name="postgresql.jar" value="../lib/postgresql-42.6.0.jar"/>
+    
+    <!-- Путь к JDBC драйверу PostgreSQL -->
+    <path id="postgresql.classpath">
+        <pathelement location="${postgresql.jar}"/>
+    </path>
+    
+    <target name="help">
+        <echo>Доступные задачи:</echo>
+        <echo>  ant create - создание структуры базы данных</echo>
+        <echo>  ant init - инициализация базы данных тестовыми данными</echo>
+        <echo>  ant create-and-init - создание и инициализация БД</echo>
+        <echo>  ant show - вывод содержимого всех таблиц</echo>
+        <echo>  ant clean - очистка всех таблиц</echo>
+    </target>
+    
+    <!-- Создание структуры БД -->
+    <target name="create">
+        <echo>Создание структуры базы данных...</echo>
+        <sql driver="org.postgresql.Driver"
+             url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
+             userid="${db.user}"
+             password="${db.password}"
+             classpathref="postgresql.classpath"
+             src="${sql.create}"/>
+        <echo>Структура базы данных создана успешно.</echo>
+    </target>
+    
+    <!-- Инициализация БД тестовыми данными -->
+    <target name="init">
+        <echo>Заполнение базы данных тестовыми данными...</echo>
+        <sql driver="org.postgresql.Driver"
+             url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
+             userid="${db.user}"
+             password="${db.password}"
+             classpathref="postgresql.classpath"
+             src="${sql.init}"/>
+        <echo>База данных заполнена тестовыми данными.</echo>
+    </target>
+    
+    <!-- Создание и инициализация БД одной командой -->
+    <target name="create-and-init" depends="create,init">
+        <echo>База данных создана и инициализирована.</echo>
+    </target>
+    
+    <!-- Вывод содержимого БД -->
+    <target name="show">
+        <echo>===== ТАБЛИЦА THEATER (Театры) =====</echo>
+        <sql driver="org.postgresql.Driver"
+             url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
+             userid="${db.user}"
+             password="${db.password}"
+             classpathref="postgresql.classpath"
+             print="true">
+            SELECT * FROM theater ORDER BY id;
+        </sql>
+        
+        <echo>===== ТАБЛИЦА PERSON (Персоны) =====</echo>
+        <sql driver="org.postgresql.Driver"
+             url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
+             userid="${db.user}"
+             password="${db.password}"
+             classpathref="postgresql.classpath"
+             print="true">
+            SELECT * FROM person ORDER BY id;
+        </sql>
+        
+        <echo>===== ТАБЛИЦА PERFORMANCE (Представления) =====</echo>
+        <sql driver="org.postgresql.Driver"
+             url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
+             userid="${db.user}"
+             password="${db.password}"
+             classpathref="postgresql.classpath"
+             print="true">
+            SELECT * FROM performance ORDER BY id;
+        </sql>
+        
+        <echo>===== ТАБЛИЦА PERFORMANCE_ACTOR (Актеры в представлениях) =====</echo>
+        <sql driver="org.postgresql.Driver"
+             url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
+             userid="${db.user}"
+             password="${db.password}"
+             classpathref="postgresql.classpath"
+             print="true">
+            SELECT * FROM performance_actor ORDER BY performance_id, actor_id;
+        </sql>
+    </target>
+    
+    <!-- Очистка (удаление всех записей из таблиц) -->
+    <target name="clean">
+        <echo>Очистка базы данных...</echo>
+        <sql driver="org.postgresql.Driver"
+             url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
+             userid="${db.user}"
+             password="${db.password}"
+             classpathref="postgresql.classpath">
+            TRUNCATE TABLE performance_actor, performance, person, theater RESTART IDENTITY CASCADE;
+        </sql>
+        <echo>База данных очищена.</echo>
+    </target>
+    
+</project>
