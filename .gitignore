@@ -1,0 +1,24 @@
+# База данных
+*.db
+theater
+
+# Временные файлы
+*.tmp
+*.bak
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Логи
+*.log
+
+# Java
+*.class
+target/
+build/
+
+# JDBC драйвер (скачивается отдельно)
+lib/*.jar
