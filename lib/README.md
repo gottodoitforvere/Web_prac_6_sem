@@ -13,9 +13,3 @@ https://jdbc.postgresql.org/download/
 
 **Прямая ссылка (версия 42.7.1):**
 https://jdbc.postgresql.org/download/postgresql-42.7.1.jar
-
-### Установка через терминал (Linux/macOS)
-
-```bash
-cd lib
-wget https://jdbc.postgresql.org/download/postgresql-42.7.1.jar
