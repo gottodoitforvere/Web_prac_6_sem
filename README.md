@@ -145,7 +145,7 @@ actor\_id (INTEGER, NOT NULL, часть PRIMARY KEY, FOREIGN KEY) \- ссылк
 
 Страница "Театры" отображает данные из таблицы theater: поля name и address для списка театров.
 
-Страница "Представления" отображает данные из таблицы performance с присоединением таблиц theater и person. Показываются поля: title, theater.name, performance\_date, performance\_time, person.name.
+Страница "Представления" отображает данные из таблицы performance с присоединением таблиц theater и person. Показываются поля: title, theater.name, performance\_date, performance\_time, person.name (режиссер).
 
 Страница "Детали представления" отображает все данные из таблицы performance, связанные данные из theater (название театра), из person (имя режиссёра), а также список актёров через таблицу performance\_actor с присоединением таблицы person.
 
