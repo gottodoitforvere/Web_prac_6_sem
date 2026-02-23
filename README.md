@@ -152,26 +152,3 @@ actor\_id (INTEGER, NOT NULL, часть PRIMARY KEY, FOREIGN KEY) \- ссылк
 Страница "Редактирование театра" работает с записью в таблице theater. Форма заполняет или изменяет все поля таблицы кроме id.
 
 Страница "Редактирование представления" работает с записью в таблице performance и связанными записями в таблице performance\_actor. При добавлении создаётся новая запись в performance и записи в performance\_actor для выбранных актёров. При редактировании изменяются данные в performance (кроме theater\_id) и обновляются записи в performance\_actor. Поле director\_id может быть изменено через выпадающий список режиссёров.
-
----
-
-## Использование
-
-### Требования
-
-- PostgreSQL 12+
-- Apache Ant
-- Java 8+
-
-### Установка (Ubuntu)
-
-```bash
-# Установка PostgreSQL
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-
-# Установка Apache Ant
-sudo apt install ant
-
-# Установка Java (если нет)
-sudo apt install default-jdk
