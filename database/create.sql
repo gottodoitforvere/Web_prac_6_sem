@@ -1,6 +1,7 @@
 -- Удаление таблиц если существуют
-DROP TABLE IF EXISTS performance_actor CASCADE;
-DROP TABLE IF EXISTS performance CASCADE;
+DROP TABLE IF EXISTS play_actor CASCADE;
+DROP TABLE IF EXISTS session CASCADE;
+DROP TABLE IF EXISTS play CASCADE;
 DROP TABLE IF EXISTS person CASCADE;
 DROP TABLE IF EXISTS theater CASCADE;
 
@@ -21,30 +22,37 @@ CREATE TABLE person (
     role VARCHAR(20) NOT NULL CHECK (role IN ('DIRECTOR', 'ACTOR', 'BOTH'))
 );
 
--- Создание таблицы представлений
-CREATE TABLE performance (
+-- Создание таблицы спектаклей
+CREATE TABLE play (
     id SERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
     theater_id INTEGER NOT NULL,
     director_id INTEGER NOT NULL,
-    performance_date DATE NOT NULL,
-    performance_time TIME NOT NULL,
     duration_minutes INTEGER NOT NULL,
     price_parterre INTEGER NOT NULL,
     price_balcony INTEGER NOT NULL,
     price_mezzanine INTEGER NOT NULL,
-    free_parterre INTEGER NOT NULL,
-    free_balcony INTEGER NOT NULL,
-    free_mezzanine INTEGER NOT NULL,
     FOREIGN KEY (theater_id) REFERENCES theater(id) ON DELETE CASCADE,
     FOREIGN KEY (director_id) REFERENCES person(id) ON DELETE RESTRICT
 );
 
--- Создание связующей таблицы представление-актер
-CREATE TABLE performance_actor (
-    performance_id INTEGER NOT NULL,
+-- Создание таблицы сеансов
+CREATE TABLE session (
+    id SERIAL PRIMARY KEY,
+    play_id INTEGER NOT NULL,
+    session_date DATE NOT NULL,
+    session_time TIME NOT NULL,
+    free_parterre INTEGER NOT NULL,
+    free_balcony INTEGER NOT NULL,
+    free_mezzanine INTEGER NOT NULL,
+    FOREIGN KEY (play_id) REFERENCES play(id) ON DELETE CASCADE
+);
+
+-- Создание связующей таблицы спектакль-актер
+CREATE TABLE play_actor (
+    play_id INTEGER NOT NULL,
     actor_id INTEGER NOT NULL,
-    PRIMARY KEY (performance_id, actor_id),
-    FOREIGN KEY (performance_id) REFERENCES performance(id) ON DELETE CASCADE,
+    PRIMARY KEY (play_id, actor_id),
+    FOREIGN KEY (play_id) REFERENCES play(id) ON DELETE CASCADE,
     FOREIGN KEY (actor_id) REFERENCES person(id) ON DELETE RESTRICT
 );
