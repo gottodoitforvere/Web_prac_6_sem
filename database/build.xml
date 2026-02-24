@@ -77,24 +77,34 @@
             SELECT * FROM person ORDER BY id;
         </sql>
         
-        <echo>===== ТАБЛИЦА PERFORMANCE (Представления) =====</echo>
+        <echo>===== ТАБЛИЦА PLAY (Спектакли) =====</echo>
         <sql driver="org.postgresql.Driver"
              url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
              userid="${db.user}"
              password="${db.password}"
              classpathref="postgresql.classpath"
              print="true">
-            SELECT * FROM performance ORDER BY id;
+            SELECT * FROM play ORDER BY id;
         </sql>
         
-        <echo>===== ТАБЛИЦА PERFORMANCE_ACTOR (Актеры в представлениях) =====</echo>
+        <echo>===== ТАБЛИЦА SESSION (Сеансы) =====</echo>
         <sql driver="org.postgresql.Driver"
              url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
              userid="${db.user}"
              password="${db.password}"
              classpathref="postgresql.classpath"
              print="true">
-            SELECT * FROM performance_actor ORDER BY performance_id, actor_id;
+            SELECT * FROM session ORDER BY id;
+        </sql>
+        
+        <echo>===== ТАБЛИЦА PLAY_ACTOR (Актёры спектаклей) =====</echo>
+        <sql driver="org.postgresql.Driver"
+             url="jdbc:postgresql://${db.host}:${db.port}/${db.name}"
+             userid="${db.user}"
+             password="${db.password}"
+             classpathref="postgresql.classpath"
+             print="true">
+            SELECT * FROM play_actor ORDER BY play_id, actor_id;
         </sql>
     </target>
     
@@ -106,7 +116,7 @@
              userid="${db.user}"
              password="${db.password}"
              classpathref="postgresql.classpath">
-            TRUNCATE TABLE performance_actor, performance, person, theater RESTART IDENTITY CASCADE;
+            TRUNCATE TABLE play_actor, session, play, person, theater RESTART IDENTITY CASCADE;
         </sql>
         <echo>База данных очищена.</echo>
     </target>
