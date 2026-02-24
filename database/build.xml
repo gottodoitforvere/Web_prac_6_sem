@@ -108,7 +108,7 @@
         </sql>
     </target>
     
-    <!-- Очистка (удаление всех записей из таблиц) -->
+    <!-- Очистка -->
     <target name="clean">
         <echo>Очистка базы данных...</echo>
         <sql driver="org.postgresql.Driver"
