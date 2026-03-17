@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="theater-box-office" default="help" basedir=".">
+    
+    <!-- Свойства проекта -->
+    <property name="src.dir" value="src/main/java"/>
+    <property name="test.src.dir" value="src/test/java"/>
+    <property name="build.dir" value="build/classes"/>
+    <property name="test.build.dir" value="build/test-classes"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="resources.dir" value="resources"/>
+    
+    <!-- Classpath для компиляции -->
+    <path id="compile.classpath">
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+    
+    <!-- Classpath для тестов -->
+    <path id="test.classpath">
+        <path refid="compile.classpath"/>
+        <pathelement location="${build.dir}"/>
+        <pathelement location="${test.build.dir}"/>
+        <pathelement location="${resources.dir}"/>
+    </path>
+    
+    <target name="help">
+        <echo>Доступные задачи:</echo>
+        <echo>  ant clean        - очистка скомпилированных файлов</echo>
+        <echo>  ant compile      - компиляция исходного кода</echo>
+        <echo>  ant compile-test - компиляция тестов</echo>
+        <echo>  ant test         - запуск всех тестов</echo>
+        <echo>  ant build        - полная сборка проекта</echo>
+    </target>
+    
+    <!-- Очистка -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${test.build.dir}"/>
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${test.build.dir}"/>
+    </target>
+    
+    <!-- Компиляция основного кода -->
+    <target name="compile" depends="clean">
+        <javac srcdir="${src.dir}" 
+               destdir="${build.dir}"
+               classpathref="compile.classpath"
+               includeantruntime="false"
+               encoding="UTF-8">
+        </javac>
+        <echo>Основной код скомпилирован</echo>
+    </target>
+    
+    <!-- Компиляция тестов -->
+    <target name="compile-test" depends="compile">
+        <javac srcdir="${test.src.dir}" 
+               destdir="${test.build.dir}"
+               classpathref="test.classpath"
+               includeantruntime="false"
+               encoding="UTF-8">
+        </javac>
+        <echo>Тесты скомпилированы</echo>
+    </target>
+    
+    <!-- Запуск тестов -->
+    <target name="test" depends="compile-test">
+        <taskdef resource="testngtasks" classpathref="compile.classpath"/>
+        <testng classpathref="test.classpath" outputDir="test-output">
+            <classfileset dir="${test.build.dir}" includes="**/*Test.class"/>
+        </testng>
+    </target>
+    
+    <!-- Полная сборка -->
+    <target name="build" depends="compile, compile-test">
+        <echo>Проект собран успешно</echo>
+    </target>
+    
+</project>

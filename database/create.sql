@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS theater CASCADE;
 
 -- Создание таблицы театров
 CREATE TABLE theater (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     address VARCHAR(300) NOT NULL,
     seats_parterre INTEGER NOT NULL,
@@ -17,17 +17,17 @@ CREATE TABLE theater (
 
 -- Создание таблицы персон (режиссеры и актеры)
 CREATE TABLE person (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('DIRECTOR', 'ACTOR', 'BOTH'))
 );
 
 -- Создание таблицы спектаклей
 CREATE TABLE play (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
-    theater_id INTEGER NOT NULL,
-    director_id INTEGER NOT NULL,
+    theater_id BIGINT NOT NULL,
+    director_id BIGINT NOT NULL,
     duration_minutes INTEGER NOT NULL,
     price_parterre INTEGER NOT NULL,
     price_balcony INTEGER NOT NULL,
@@ -38,8 +38,8 @@ CREATE TABLE play (
 
 -- Создание таблицы сеансов
 CREATE TABLE session (
-    id SERIAL PRIMARY KEY,
-    play_id INTEGER NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    play_id BIGINT NOT NULL,
     session_date DATE NOT NULL,
     session_time TIME NOT NULL,
     free_parterre INTEGER NOT NULL,
@@ -50,8 +50,8 @@ CREATE TABLE session (
 
 -- Создание связующей таблицы спектакль-актер
 CREATE TABLE play_actor (
-    play_id INTEGER NOT NULL,
-    actor_id INTEGER NOT NULL,
+    play_id BIGINT NOT NULL,
+    actor_id BIGINT NOT NULL,
     PRIMARY KEY (play_id, actor_id),
     FOREIGN KEY (play_id) REFERENCES play(id) ON DELETE CASCADE,
     FOREIGN KEY (actor_id) REFERENCES person(id) ON DELETE RESTRICT
