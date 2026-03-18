@@ -57,6 +57,8 @@ public class PlayDaoTest extends BaseTest {
         assertEquals(saved.getTitle(), "Тестовый спектакль");
         assertEquals(saved.getDurationMinutes(), Integer.valueOf(120));
         assertEquals(saved.getPriceParterre(), Integer.valueOf(1000));
+        assertEquals(saved.getTheater().getId(), theater.getId());
+        assertEquals(saved.getDirector().getId(), director.getId());
     }
     
     @Test
@@ -70,6 +72,8 @@ public class PlayDaoTest extends BaseTest {
         assertNotNull(found);
         assertEquals(found.getId(), id);
         assertEquals(found.getTitle(), "Гамлет");
+        assertEquals(found.getTheater().getId(), theater.getId());
+        assertEquals(found.getDirector().getId(), director.getId());
     }
     
     @Test
@@ -89,10 +93,11 @@ public class PlayDaoTest extends BaseTest {
         
         assertNotNull(plays);
         assertEquals(plays.size(), 3);
+        assertTrue(plays.stream().allMatch(p -> p.getTheater().getId().equals(theater.getId())));
     }
     
     @Test
-    public void testFindByTheaterId() {
+    public void testFindByTheaterId_Found() {
         Theater theater2 = new Theater("Другой театр", "Другой адрес", 200, 100, 50);
         theaterDao.save(theater2);
         
@@ -104,10 +109,21 @@ public class PlayDaoTest extends BaseTest {
         
         assertNotNull(plays);
         assertEquals(plays.size(), 2);
+        assertTrue(plays.stream().allMatch(p -> p.getTheater().getId().equals(theater.getId())));
     }
     
     @Test
-    public void testFindByDirectorId() {
+    public void testFindByTheaterId_NotFound() {
+        playDao.save(new Play("Спектакль", theater, director, 120, 1000, 800, 600));
+        
+        List<Play> plays = playDao.findByTheaterId(999L);
+        
+        assertNotNull(plays);
+        assertTrue(plays.isEmpty());
+    }
+    
+    @Test
+    public void testFindByDirectorId_Found() {
         Person director2 = new Person("Другой режиссёр", PersonRole.DIRECTOR);
         personDao.save(director2);
         
@@ -119,10 +135,21 @@ public class PlayDaoTest extends BaseTest {
         
         assertNotNull(plays);
         assertEquals(plays.size(), 2);
+        assertTrue(plays.stream().allMatch(p -> p.getDirector().getId().equals(director.getId())));
     }
     
     @Test
-    public void testFindByActorId() {
+    public void testFindByDirectorId_NotFound() {
+        playDao.save(new Play("Спектакль", theater, director, 120, 1000, 800, 600));
+        
+        List<Play> plays = playDao.findByDirectorId(999L);
+        
+        assertNotNull(plays);
+        assertTrue(plays.isEmpty());
+    }
+    
+    @Test
+    public void testFindByActorId_Found() {
         Play play1 = new Play("Спектакль 1", theater, director, 120, 1000, 800, 600);
         play1.addActor(actor1);
         playDao.save(play1);
@@ -140,10 +167,23 @@ public class PlayDaoTest extends BaseTest {
         
         assertNotNull(plays);
         assertEquals(plays.size(), 2);
+        assertTrue(plays.stream().anyMatch(p -> p.getId().equals(play1.getId())));
+        assertTrue(plays.stream().anyMatch(p -> p.getId().equals(play2.getId())));
+        assertTrue(plays.stream().noneMatch(p -> p.getId().equals(play3.getId())));
     }
     
     @Test
-    public void testFindByTitle() {
+    public void testFindByActorId_NotFound() {
+        playDao.save(new Play("Спектакль", theater, director, 120, 1000, 800, 600));
+        
+        List<Play> plays = playDao.findByActorId(999L);
+        
+        assertNotNull(plays);
+        assertTrue(plays.isEmpty());
+    }
+    
+    @Test
+    public void testFindByTitle_Found() {
         playDao.save(new Play("Ромео и Джульетта", theater, director, 120, 1000, 800, 600));
         playDao.save(new Play("Гамлет", theater, director, 150, 1200, 900, 700));
         
@@ -155,7 +195,17 @@ public class PlayDaoTest extends BaseTest {
     }
     
     @Test
-    public void testFindBySessionDate() {
+    public void testFindByTitle_NotFound() {
+        playDao.save(new Play("Гамлет", theater, director, 150, 1200, 900, 700));
+        
+        List<Play> plays = playDao.findByTitle("Несуществующий");
+        
+        assertNotNull(plays);
+        assertTrue(plays.isEmpty());
+    }
+    
+    @Test
+    public void testFindBySessionDate_Found() {
         Play play1 = new Play("Спектакль 1", theater, director, 120, 1000, 800, 600);
         playDao.save(play1);
         
@@ -176,10 +226,23 @@ public class PlayDaoTest extends BaseTest {
         
         assertNotNull(plays);
         assertEquals(plays.size(), 2);
+        assertTrue(plays.stream().anyMatch(p -> p.getId().equals(play1.getId())));
+        assertTrue(plays.stream().anyMatch(p -> p.getId().equals(play2.getId())));
     }
     
     @Test
-    public void testFindByMaxPriceParterre() {
+    public void testFindBySessionDate_NotFound() {
+        Play play = new Play("Спектакль", theater, director, 120, 1000, 800, 600);
+        playDao.save(play);
+        
+        List<Play> plays = playDao.findBySessionDate(LocalDate.of(2099, 1, 1));
+        
+        assertNotNull(plays);
+        assertTrue(plays.isEmpty());
+    }
+    
+    @Test
+    public void testFindByMaxPriceParterre_Found() {
         playDao.save(new Play("Дешёвый", theater, director, 120, 500, 400, 300));
         playDao.save(new Play("Средний", theater, director, 150, 1000, 800, 600));
         playDao.save(new Play("Дорогой", theater, director, 100, 2000, 1500, 1000));
@@ -188,17 +251,145 @@ public class PlayDaoTest extends BaseTest {
         
         assertNotNull(plays);
         assertEquals(plays.size(), 2);
+        assertTrue(plays.stream().allMatch(p -> p.getPriceParterre() <= 1000));
+    }
+    
+    @Test
+    public void testFindByMaxPriceParterre_NotFound() {
+        playDao.save(new Play("Дорогой", theater, director, 100, 2000, 1500, 1000));
+        
+        List<Play> plays = playDao.findByMaxPriceParterre(500);
+        
+        assertNotNull(plays);
+        assertTrue(plays.isEmpty());
+    }
+    
+    @Test
+    public void testFindByIdWithDetails_Found() {
+        Play play = new Play("Спектакль", theater, director, 120, 1000, 800, 600);
+        play.addActor(actor1);
+        playDao.save(play);
+        
+        sessionDao.save(new ru.theater.model.Session(
+            play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30
+        ));
+        
+        Play found = playDao.findByIdWithDetails(play.getId());
+        
+        assertNotNull(found);
+        assertEquals(found.getTitle(), "Спектакль");
+        assertEquals(found.getActors().size(), 1);
+        assertEquals(found.getSessions().size(), 1);
+        assertEquals(found.getTheater().getId(), theater.getId());
+        assertEquals(found.getDirector().getId(), director.getId());
+    }
+    
+    @Test
+    public void testFindByIdWithDetails_NotFound() {
+        Play found = playDao.findByIdWithDetails(999L);
+        
+        assertNull(found);
+    }
+    
+    @Test
+    public void testFindByFilters_AllNull() {
+        playDao.save(new Play("Спектакль 1", theater, director, 120, 1000, 800, 600));
+        playDao.save(new Play("Спектакль 2", theater, director, 150, 1200, 900, 700));
+        
+        List<Play> plays = playDao.findByFilters(null, null, null, null);
+        
+        assertNotNull(plays);
+        assertEquals(plays.size(), 2);
+    }
+    
+    @Test
+    public void testFindByFilters_OnlyTheaterId() {
+        Theater theater2 = new Theater("Другой театр", "Другой адрес", 200, 100, 50);
+        theaterDao.save(theater2);
+        
+        playDao.save(new Play("Спектакль 1", theater, director, 120, 1000, 800, 600));
+        playDao.save(new Play("Спектакль 2", theater2, director, 150, 1200, 900, 700));
+        
+        List<Play> plays = playDao.findByFilters(theater.getId(), null, null, null);
+        
+        assertNotNull(plays);
+        assertEquals(plays.size(), 1);
+        assertEquals(plays.get(0).getTheater().getId(), theater.getId());
+    }
+    
+    @Test
+    public void testFindByFilters_OnlyDirectorId() {
+        Person director2 = new Person("Другой режиссёр", PersonRole.DIRECTOR);
+        personDao.save(director2);
+        
+        playDao.save(new Play("Спектакль 1", theater, director, 120, 1000, 800, 600));
+        playDao.save(new Play("Спектакль 2", theater, director2, 150, 1200, 900, 700));
+        
+        List<Play> plays = playDao.findByFilters(null, director.getId(), null, null);
+        
+        assertNotNull(plays);
+        assertEquals(plays.size(), 1);
+        assertEquals(plays.get(0).getDirector().getId(), director.getId());
+    }
+    
+    @Test
+    public void testFindByFilters_OnlyActorId() {
+        Play play1 = new Play("Спектакль 1", theater, director, 120, 1000, 800, 600);
+        play1.addActor(actor1);
+        playDao.save(play1);
+        
+        Play play2 = new Play("Спектакль 2", theater, director, 150, 1200, 900, 700);
+        playDao.save(play2);
+        
+        List<Play> plays = playDao.findByFilters(null, null, actor1.getId(), null);
+        
+        assertNotNull(plays);
+        assertEquals(plays.size(), 1);
+        assertEquals(plays.get(0).getId(), play1.getId());
+    }
+    
+    @Test
+    public void testFindByFilters_OnlyDate() {
+        Play play1 = new Play("Спектакль 1", theater, director, 120, 1000, 800, 600);
+        playDao.save(play1);
+        sessionDao.save(new ru.theater.model.Session(
+            play1, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30
+        ));
+        
+        playDao.save(new Play("Спектакль 2", theater, director, 150, 1200, 900, 700));
+        
+        List<Play> plays = playDao.findByFilters(null, null, null, LocalDate.of(2024, 3, 15));
+        
+        assertNotNull(plays);
+        assertEquals(plays.size(), 1);
+        assertEquals(plays.get(0).getId(), play1.getId());
+    }
+    
+    @Test
+    public void testFindByFilters_AllParameters() {
+        Play play = new Play("Спектакль", theater, director, 120, 1000, 800, 600);
+        play.addActor(actor1);
+        playDao.save(play);
+        sessionDao.save(new ru.theater.model.Session(
+            play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30
+        ));
+        
+        List<Play> plays = playDao.findByFilters(theater.getId(), director.getId(), actor1.getId(), LocalDate.of(2024, 3, 15));
+        
+        assertNotNull(plays);
+        assertEquals(plays.size(), 1);
+        assertEquals(plays.get(0).getId(), play.getId());
     }
     
     @Test
     public void testGetFormattedDuration() {
         Play play1 = new Play("Спектакль", theater, director, 150, 1000, 800, 600);
         Play play2 = new Play("Спектакль", theater, director, 120, 1000, 800, 600);
-        Play play3 = new Play("Спектакль", theater, director, 90, 1000, 800, 600);
+        Play play3 = new Play("Спектакль", theater, director, 45, 1000, 800, 600);
         
         assertEquals(play1.getFormattedDuration(), "2 ч 30 мин");
         assertEquals(play2.getFormattedDuration(), "2 ч");
-        assertEquals(play3.getFormattedDuration(), "1 ч 30 мин");
+        assertEquals(play3.getFormattedDuration(), "45 мин");
     }
     
     @Test
@@ -207,6 +398,7 @@ public class PlayDaoTest extends BaseTest {
         
         play.addActor(actor1);
         assertTrue(play.getActors().contains(actor1));
+        assertTrue(actor1.getActedPlays().contains(play));
         assertEquals(play.getActors().size(), 1);
         
         play.addActor(actor2);
@@ -214,6 +406,23 @@ public class PlayDaoTest extends BaseTest {
         
         play.removeActor(actor1);
         assertFalse(play.getActors().contains(actor1));
+        assertFalse(actor1.getActedPlays().contains(play));
         assertEquals(play.getActors().size(), 1);
+    }
+    
+    @Test
+    public void testAddRemoveSession() {
+        Play play = new Play("Спектакль", theater, director, 120, 1000, 800, 600);
+        ru.theater.model.Session session = new ru.theater.model.Session(
+            play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30
+        );
+        
+        play.addSession(session);
+        assertTrue(play.getSessions().contains(session));
+        assertEquals(session.getPlay(), play);
+        
+        play.removeSession(session);
+        assertFalse(play.getSessions().contains(session));
+        assertNull(session.getPlay());
     }
 }

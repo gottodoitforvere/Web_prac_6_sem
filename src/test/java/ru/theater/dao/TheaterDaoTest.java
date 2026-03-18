@@ -2,6 +2,9 @@ package ru.theater.dao;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import ru.theater.model.Person;
+import ru.theater.model.PersonRole;
+import ru.theater.model.Play;
 import ru.theater.model.Theater;
 
 import java.util.List;
@@ -25,7 +28,7 @@ public class TheaterDaoTest extends BaseTest {
         
         Theater saved = theaterDao.save(theater);
         
-        assertNotNull(saved.getId(), "ID должен быть присвоен после сохранения");
+        assertNotNull(saved.getId());
         assertEquals(saved.getName(), "Тестовый театр");
         assertEquals(saved.getAddress(), "ул. Тестовая, 1");
         assertEquals(saved.getSeatsParterre(), Integer.valueOf(100));
@@ -41,7 +44,7 @@ public class TheaterDaoTest extends BaseTest {
         
         Theater found = theaterDao.findById(id);
         
-        assertNotNull(found, "Театр должен быть найден");
+        assertNotNull(found);
         assertEquals(found.getId(), id);
         assertEquals(found.getName(), "Большой театр");
         assertEquals(found.getAddress(), "Москва");
@@ -51,7 +54,7 @@ public class TheaterDaoTest extends BaseTest {
     public void testFindById_NotExists() {
         Theater found = theaterDao.findById(999L);
         
-        assertNull(found, "Несуществующий театр должен вернуть null");
+        assertNull(found);
     }
     
     @Test
@@ -63,7 +66,10 @@ public class TheaterDaoTest extends BaseTest {
         List<Theater> theaters = theaterDao.findAll();
         
         assertNotNull(theaters);
-        assertEquals(theaters.size(), 3, "Должно быть найдено 3 театра");
+        assertEquals(theaters.size(), 3);
+        assertTrue(theaters.stream().anyMatch(t -> t.getName().equals("Театр 1")));
+        assertTrue(theaters.stream().anyMatch(t -> t.getName().equals("Театр 2")));
+        assertTrue(theaters.stream().anyMatch(t -> t.getName().equals("Театр 3")));
     }
     
     @Test
@@ -81,6 +87,27 @@ public class TheaterDaoTest extends BaseTest {
     }
     
     @Test
+    public void testSaveOrUpdate_New() {
+        Theater theater = new Theater("Новый театр", "Адрес", 100, 50, 30);
+        
+        theaterDao.saveOrUpdate(theater);
+        
+        assertNotNull(theater.getId());
+    }
+    
+    @Test
+    public void testSaveOrUpdate_Existing() {
+        Theater theater = new Theater("Театр", "Адрес", 100, 50, 30);
+        theaterDao.save(theater);
+        
+        theater.setName("Изменённый");
+        theaterDao.saveOrUpdate(theater);
+        
+        Theater found = theaterDao.findById(theater.getId());
+        assertEquals(found.getName(), "Изменённый");
+    }
+    
+    @Test
     public void testDelete() {
         Theater theater = new Theater("Театр для удаления", "Адрес", 100, 50, 30);
         theaterDao.save(theater);
@@ -89,7 +116,24 @@ public class TheaterDaoTest extends BaseTest {
         theaterDao.delete(theater);
         
         Theater found = theaterDao.findById(id);
-        assertNull(found, "Удалённый театр не должен быть найден");
+        assertNull(found);
+    }
+    
+    @Test
+    public void testDeleteById_Exists() {
+        Theater theater = new Theater("Театр", "Адрес", 100, 50, 30);
+        theaterDao.save(theater);
+        Long id = theater.getId();
+        
+        theaterDao.deleteById(id);
+        
+        Theater found = theaterDao.findById(id);
+        assertNull(found);
+    }
+    
+    @Test
+    public void testDeleteById_NotExists() {
+        theaterDao.deleteById(999L);
     }
     
     @Test
@@ -111,11 +155,11 @@ public class TheaterDaoTest extends BaseTest {
         List<Theater> theaters = theaterDao.findByName("Несуществующий");
         
         assertNotNull(theaters);
-        assertTrue(theaters.isEmpty(), "Список должен быть пустым");
+        assertTrue(theaters.isEmpty());
     }
     
     @Test
-    public void testFindByAddress() {
+    public void testFindByAddress_Found() {
         theaterDao.save(new Theater("Театр 1", "Москва, ул. Ленина", 100, 50, 30));
         theaterDao.save(new Theater("Театр 2", "Петербург, пр. Невский", 200, 100, 60));
         
@@ -127,7 +171,17 @@ public class TheaterDaoTest extends BaseTest {
     }
     
     @Test
-    public void testFindByMinTotalSeats() {
+    public void testFindByAddress_NotFound() {
+        theaterDao.save(new Theater("Театр", "Москва", 100, 50, 30));
+        
+        List<Theater> theaters = theaterDao.findByAddress("Лондон");
+        
+        assertNotNull(theaters);
+        assertTrue(theaters.isEmpty());
+    }
+    
+    @Test
+    public void testFindByMinTotalSeats_Found() {
         theaterDao.save(new Theater("Малый театр", "Адрес 1", 50, 30, 20));
         theaterDao.save(new Theater("Средний театр", "Адрес 2", 200, 100, 50));
         theaterDao.save(new Theater("Большой театр", "Адрес 3", 500, 200, 150));
@@ -135,7 +189,46 @@ public class TheaterDaoTest extends BaseTest {
         List<Theater> theaters = theaterDao.findByMinTotalSeats(300);
         
         assertNotNull(theaters);
-        assertEquals(theaters.size(), 2, "Должно быть найдено 2 театра с >= 300 мест");
+        assertEquals(theaters.size(), 2);
+        assertTrue(theaters.stream().allMatch(t -> t.getTotalSeats() >= 300));
+    }
+    
+    @Test
+    public void testFindByMinTotalSeats_NotFound() {
+        theaterDao.save(new Theater("Малый театр", "Адрес 1", 50, 30, 20));
+        
+        List<Theater> theaters = theaterDao.findByMinTotalSeats(1000);
+        
+        assertNotNull(theaters);
+        assertTrue(theaters.isEmpty());
+    }
+    
+    @Test
+    public void testFindByIdWithPlays_Found() {
+        Theater theater = new Theater("Театр", "Адрес", 100, 50, 30);
+        theaterDao.save(theater);
+        
+        PersonDao personDao = new PersonDao();
+        Person director = new Person("Режиссёр", PersonRole.DIRECTOR);
+        personDao.save(director);
+        
+        PlayDao playDao = new PlayDao();
+        playDao.save(new Play("Спектакль 1", theater, director, 120, 1000, 800, 600));
+        playDao.save(new Play("Спектакль 2", theater, director, 150, 1200, 900, 700));
+        
+        Theater found = theaterDao.findByIdWithPlays(theater.getId());
+        
+        assertNotNull(found);
+        assertEquals(found.getPlays().size(), 2);
+        assertTrue(found.getPlays().stream().anyMatch(p -> p.getTitle().equals("Спектакль 1")));
+        assertTrue(found.getPlays().stream().anyMatch(p -> p.getTitle().equals("Спектакль 2")));
+    }
+    
+    @Test
+    public void testFindByIdWithPlays_NotFound() {
+        Theater found = theaterDao.findByIdWithPlays(999L);
+        
+        assertNull(found);
     }
     
     @Test
@@ -145,5 +238,20 @@ public class TheaterDaoTest extends BaseTest {
         Integer total = theater.getTotalSeats();
         
         assertEquals(total, Integer.valueOf(180));
+    }
+    
+    @Test
+    public void testAddRemovePlay() {
+        Theater theater = new Theater("Театр", "Адрес", 100, 50, 30);
+        Person director = new Person("Режиссёр", PersonRole.DIRECTOR);
+        Play play = new Play("Спектакль", null, director, 120, 1000, 800, 600);
+        
+        theater.addPlay(play);
+        assertTrue(theater.getPlays().contains(play));
+        assertEquals(play.getTheater(), theater);
+        
+        theater.removePlay(play);
+        assertFalse(theater.getPlays().contains(play));
+        assertNull(play.getTheater());
     }
 }

@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="theater-box-office" default="help" basedir=".">
     
-    <!-- Свойства проекта -->
     <property name="src.dir" value="src/main/java"/>
     <property name="test.src.dir" value="src/test/java"/>
     <property name="build.dir" value="build/classes"/>
     <property name="test.build.dir" value="build/test-classes"/>
     <property name="lib.dir" value="lib"/>
     <property name="resources.dir" value="resources"/>
+    <property name="coverage.dir" value="coverage-report"/>
     
-    <!-- Classpath для компиляции -->
     <path id="compile.classpath">
         <fileset dir="${lib.dir}">
             <include name="*.jar"/>
         </fileset>
     </path>
     
-    <!-- Classpath для тестов -->
     <path id="test.classpath">
         <path refid="compile.classpath"/>
         <pathelement location="${build.dir}"/>
@@ -24,46 +22,42 @@
         <pathelement location="${resources.dir}"/>
     </path>
     
+    <path id="jacoco.classpath">
+        <fileset dir="${lib.dir}">
+            <include name="org.jacoco.*.jar"/>
+            <include name="asm*.jar"/>
+        </fileset>
+    </path>
+    
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+        <classpath refid="jacoco.classpath"/>
+    </taskdef>
+    
     <target name="help">
-        <echo>Доступные задачи:</echo>
-        <echo>  ant clean        - очистка скомпилированных файлов</echo>
-        <echo>  ant compile      - компиляция исходного кода</echo>
-        <echo>  ant compile-test - компиляция тестов</echo>
-        <echo>  ant test         - запуск всех тестов</echo>
-        <echo>  ant build        - полная сборка проекта</echo>
+        <echo>Задачи: clean, compile, compile-test, test, coverage</echo>
     </target>
     
-    <!-- Очистка -->
     <target name="clean">
         <delete dir="${build.dir}"/>
         <delete dir="${test.build.dir}"/>
+        <delete dir="${coverage.dir}"/>
+        <delete file="jacoco.exec"/>
         <mkdir dir="${build.dir}"/>
         <mkdir dir="${test.build.dir}"/>
     </target>
     
-    <!-- Компиляция основного кода -->
     <target name="compile" depends="clean">
-        <javac srcdir="${src.dir}" 
-               destdir="${build.dir}"
-               classpathref="compile.classpath"
-               includeantruntime="false"
-               encoding="UTF-8">
-        </javac>
-        <echo>Основной код скомпилирован</echo>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="compile.classpath" 
+               includeantruntime="false" encoding="UTF-8" debug="true"/>
+        <echo>Код скомпилирован</echo>
     </target>
     
-    <!-- Компиляция тестов -->
     <target name="compile-test" depends="compile">
-        <javac srcdir="${test.src.dir}" 
-               destdir="${test.build.dir}"
-               classpathref="test.classpath"
-               includeantruntime="false"
-               encoding="UTF-8">
-        </javac>
+        <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" classpathref="test.classpath" 
+               includeantruntime="false" encoding="UTF-8" debug="true"/>
         <echo>Тесты скомпилированы</echo>
     </target>
     
-    <!-- Запуск тестов -->
     <target name="test" depends="compile-test">
         <taskdef resource="testngtasks" classpathref="compile.classpath"/>
         <testng classpathref="test.classpath" outputDir="test-output">
@@ -71,9 +65,43 @@
         </testng>
     </target>
     
-    <!-- Полная сборка -->
+    <target name="coverage" depends="compile-test" xmlns:jacoco="antlib:org.jacoco.ant">
+        <taskdef resource="testngtasks" classpathref="compile.classpath"/>
+        
+        <jacoco:coverage destfile="jacoco.exec">
+            <testng classpathref="test.classpath" outputDir="test-output">
+                <classfileset dir="${test.build.dir}" includes="**/*Test.class"/>
+            </testng>
+        </jacoco:coverage>
+        
+        <mkdir dir="${coverage.dir}"/>
+        
+        <jacoco:report>
+            <executiondata>
+                <file file="jacoco.exec"/>
+            </executiondata>
+            <structure name="Theater DAO Coverage">
+                <classfiles>
+                    <fileset dir="${build.dir}">
+                        <include name="**/dao/*.class"/>
+                        <include name="**/model/*.class"/>
+                    </fileset>
+                </classfiles>
+                <sourcefiles encoding="UTF-8">
+                    <fileset dir="${src.dir}"/>
+                </sourcefiles>
+            </structure>
+            <html destdir="${coverage.dir}"/>
+            <csv destfile="${coverage.dir}/coverage.csv"/>
+        </jacoco:report>
+        
+        <echo>=========================================</echo>
+        <echo>Отчет о покрытии: ${coverage.dir}/index.html</echo>
+        <echo>=========================================</echo>
+    </target>
+    
     <target name="build" depends="compile, compile-test">
-        <echo>Проект собран успешно</echo>
+        <echo>Проект собран</echo>
     </target>
     
 </project>

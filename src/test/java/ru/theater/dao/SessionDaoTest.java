@@ -55,6 +55,7 @@ public class SessionDaoTest extends BaseTest {
         assertEquals(saved.getSessionDate(), LocalDate.of(2024, 3, 15));
         assertEquals(saved.getSessionTime(), LocalTime.of(19, 0));
         assertEquals(saved.getFreeParterre(), Integer.valueOf(100));
+        assertEquals(saved.getPlay().getId(), play.getId());
     }
     
     @Test
@@ -69,6 +70,7 @@ public class SessionDaoTest extends BaseTest {
         
         assertNotNull(found);
         assertEquals(found.getId(), id);
+        assertEquals(found.getPlay().getId(), play.getId());
     }
     
     @Test
@@ -88,10 +90,11 @@ public class SessionDaoTest extends BaseTest {
         
         assertNotNull(sessions);
         assertEquals(sessions.size(), 3);
+        assertTrue(sessions.stream().allMatch(s -> s.getPlay().getId().equals(play.getId())));
     }
     
     @Test
-    public void testFindByPlayId() {
+    public void testFindByPlayId_Found() {
         Play play2 = new Play("Другой спектакль", theater, director, 150, 1200, 900, 700);
         playDao.save(play2);
         
@@ -103,10 +106,22 @@ public class SessionDaoTest extends BaseTest {
         
         assertNotNull(sessions);
         assertEquals(sessions.size(), 2);
+        assertTrue(sessions.stream().allMatch(s -> s.getPlay().getId().equals(play.getId())));
+        assertTrue(!sessions.get(0).getSessionDate().isAfter(sessions.get(1).getSessionDate()));
     }
     
     @Test
-    public void testFindByDate() {
+    public void testFindByPlayId_NotFound() {
+        sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30));
+        
+        List<ru.theater.model.Session> sessions = sessionDao.findByPlayId(999L);
+        
+        assertNotNull(sessions);
+        assertTrue(sessions.isEmpty());
+    }
+    
+    @Test
+    public void testFindByDate_Found() {
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30));
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(20, 0), 100, 50, 30));
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 16), LocalTime.of(19, 0), 100, 50, 30));
@@ -115,10 +130,22 @@ public class SessionDaoTest extends BaseTest {
         
         assertNotNull(sessions);
         assertEquals(sessions.size(), 2);
+        assertTrue(sessions.stream().allMatch(s -> s.getSessionDate().equals(LocalDate.of(2024, 3, 15))));
+        assertTrue(!sessions.get(0).getSessionTime().isAfter(sessions.get(1).getSessionTime()));
     }
     
     @Test
-    public void testFindByDateRange() {
+    public void testFindByDate_NotFound() {
+        sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30));
+        
+        List<ru.theater.model.Session> sessions = sessionDao.findByDate(LocalDate.of(2099, 1, 1));
+        
+        assertNotNull(sessions);
+        assertTrue(sessions.isEmpty());
+    }
+    
+    @Test
+    public void testFindByDateRange_Found() {
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 14), LocalTime.of(19, 0), 100, 50, 30));
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30));
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 16), LocalTime.of(19, 0), 100, 50, 30));
@@ -130,10 +157,26 @@ public class SessionDaoTest extends BaseTest {
         
         assertNotNull(sessions);
         assertEquals(sessions.size(), 2);
+        assertTrue(sessions.stream().allMatch(s ->
+            !s.getSessionDate().isBefore(LocalDate.of(2024, 3, 15)) &&
+            !s.getSessionDate().isAfter(LocalDate.of(2024, 3, 16))
+        ));
     }
     
     @Test
-    public void testFindWithAvailableSeats() {
+    public void testFindByDateRange_NotFound() {
+        sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 20), LocalTime.of(19, 0), 100, 50, 30));
+        
+        List<ru.theater.model.Session> sessions = sessionDao.findByDateRange(
+            LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 5)
+        );
+        
+        assertNotNull(sessions);
+        assertTrue(sessions.isEmpty());
+    }
+    
+    @Test
+    public void testFindWithAvailableSeats_Parterre() {
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 10, 5, 3));
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 16), LocalTime.of(19, 0), 50, 25, 15));
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 17), LocalTime.of(19, 0), 100, 50, 30));
@@ -142,10 +185,40 @@ public class SessionDaoTest extends BaseTest {
         
         assertNotNull(sessions);
         assertEquals(sessions.size(), 2);
+        assertTrue(sessions.stream().allMatch(s -> s.getFreeParterre() >= 20));
     }
     
     @Test
-    public void testFindUpcoming() {
+    public void testFindWithAvailableSeats_Balcony() {
+        sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 0, 10, 0));
+        sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 16), LocalTime.of(19, 0), 0, 30, 0));
+        
+        List<ru.theater.model.Session> sessions = sessionDao.findWithAvailableSeats("balcony", 20);
+        
+        assertNotNull(sessions);
+        assertEquals(sessions.size(), 1);
+        assertTrue(sessions.stream().allMatch(s -> s.getFreeBalcony() >= 20));
+    }
+    
+    @Test
+    public void testFindWithAvailableSeats_Mezzanine() {
+        sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 0, 0, 10));
+        sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 16), LocalTime.of(19, 0), 0, 0, 30));
+        
+        List<ru.theater.model.Session> sessions = sessionDao.findWithAvailableSeats("mezzanine", 20);
+        
+        assertNotNull(sessions);
+        assertEquals(sessions.size(), 1);
+        assertTrue(sessions.stream().allMatch(s -> s.getFreeMezzanine() >= 20));
+    }
+    
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testFindWithAvailableSeats_InvalidType() {
+        sessionDao.findWithAvailableSeats("invalid", 10);
+    }
+    
+    @Test
+    public void testFindUpcoming_Found() {
         LocalDate today = LocalDate.now();
         
         sessionDao.save(new ru.theater.model.Session(play, today.minusDays(1), LocalTime.of(19, 0), 100, 50, 30));
@@ -155,11 +228,20 @@ public class SessionDaoTest extends BaseTest {
         List<ru.theater.model.Session> sessions = sessionDao.findUpcoming();
         
         assertNotNull(sessions);
-        assertEquals(sessions.size(), 2, "Должно быть найдено 2 будущих сеанса (включая сегодняшний)");
+        assertEquals(sessions.size(), 2);
+        assertTrue(sessions.stream().allMatch(s -> !s.getSessionDate().isBefore(today)));
     }
     
     @Test
-    public void testFindByPlayIdWithAvailableSeats() {
+    public void testFindUpcoming_Empty() {
+        List<ru.theater.model.Session> sessions = sessionDao.findUpcoming();
+        
+        assertNotNull(sessions);
+        assertTrue(sessions.isEmpty());
+    }
+    
+    @Test
+    public void testFindByPlayIdWithAvailableSeats_Found() {
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 0, 0, 0));
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 16), LocalTime.of(19, 0), 10, 0, 0));
         sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 17), LocalTime.of(19, 0), 0, 5, 0));
@@ -167,11 +249,24 @@ public class SessionDaoTest extends BaseTest {
         List<ru.theater.model.Session> sessions = sessionDao.findByPlayIdWithAvailableSeats(play.getId());
         
         assertNotNull(sessions);
-        assertEquals(sessions.size(), 2, "Должно быть 2 сеанса со свободными местами");
+        assertEquals(sessions.size(), 2);
+        assertTrue(sessions.stream().allMatch(s ->
+            s.getFreeParterre() > 0 || s.getFreeBalcony() > 0 || s.getFreeMezzanine() > 0
+        ));
     }
     
     @Test
-    public void testBuyTickets_Success() {
+    public void testFindByPlayIdWithAvailableSeats_NotFound() {
+        sessionDao.save(new ru.theater.model.Session(play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 0, 0, 0));
+        
+        List<ru.theater.model.Session> sessions = sessionDao.findByPlayIdWithAvailableSeats(play.getId());
+        
+        assertNotNull(sessions);
+        assertTrue(sessions.isEmpty());
+    }
+    
+    @Test
+    public void testBuyTickets_Parterre_Success() {
         ru.theater.model.Session session = new ru.theater.model.Session(
             play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30
         );
@@ -179,10 +274,46 @@ public class SessionDaoTest extends BaseTest {
         
         boolean result = sessionDao.buyTickets(session.getId(), "parterre", 10);
         
-        assertTrue(result, "Покупка должна быть успешной");
+        assertTrue(result);
         
         ru.theater.model.Session updated = sessionDao.findById(session.getId());
         assertEquals(updated.getFreeParterre(), Integer.valueOf(90));
+        assertEquals(updated.getFreeBalcony(), Integer.valueOf(50));
+        assertEquals(updated.getFreeMezzanine(), Integer.valueOf(30));
+    }
+    
+    @Test
+    public void testBuyTickets_Balcony_Success() {
+        ru.theater.model.Session session = new ru.theater.model.Session(
+            play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30
+        );
+        sessionDao.save(session);
+        
+        boolean result = sessionDao.buyTickets(session.getId(), "balcony", 10);
+        
+        assertTrue(result);
+        
+        ru.theater.model.Session updated = sessionDao.findById(session.getId());
+        assertEquals(updated.getFreeBalcony(), Integer.valueOf(40));
+        assertEquals(updated.getFreeParterre(), Integer.valueOf(100));
+        assertEquals(updated.getFreeMezzanine(), Integer.valueOf(30));
+    }
+    
+    @Test
+    public void testBuyTickets_Mezzanine_Success() {
+        ru.theater.model.Session session = new ru.theater.model.Session(
+            play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30
+        );
+        sessionDao.save(session);
+        
+        boolean result = sessionDao.buyTickets(session.getId(), "mezzanine", 10);
+        
+        assertTrue(result);
+        
+        ru.theater.model.Session updated = sessionDao.findById(session.getId());
+        assertEquals(updated.getFreeMezzanine(), Integer.valueOf(20));
+        assertEquals(updated.getFreeParterre(), Integer.valueOf(100));
+        assertEquals(updated.getFreeBalcony(), Integer.valueOf(50));
     }
     
     @Test
@@ -194,10 +325,29 @@ public class SessionDaoTest extends BaseTest {
         
         boolean result = sessionDao.buyTickets(session.getId(), "parterre", 10);
         
-        assertFalse(result, "Покупка должна быть неуспешной");
+        assertFalse(result);
         
         ru.theater.model.Session updated = sessionDao.findById(session.getId());
-        assertEquals(updated.getFreeParterre(), Integer.valueOf(5), "Количество мест не должно измениться");
+        assertEquals(updated.getFreeParterre(), Integer.valueOf(5));
+    }
+    
+    @Test
+    public void testBuyTickets_SessionNotFound() {
+        boolean result = sessionDao.buyTickets(999L, "parterre", 10);
+        
+        assertFalse(result);
+    }
+    
+    @Test
+    public void testBuyTickets_InvalidSeatType() {
+        ru.theater.model.Session session = new ru.theater.model.Session(
+            play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 100, 50, 30
+        );
+        sessionDao.save(session);
+        
+        boolean result = sessionDao.buyTickets(session.getId(), "invalid", 10);
+        
+        assertFalse(result);
     }
     
     @Test
@@ -220,8 +370,45 @@ public class SessionDaoTest extends BaseTest {
         assertTrue(session.hasAvailableSeats("parterre", 5));
         assertTrue(session.hasAvailableSeats("parterre", 10));
         assertFalse(session.hasAvailableSeats("parterre", 11));
-        
         assertTrue(session.hasAvailableSeats("balcony", 5));
         assertFalse(session.hasAvailableSeats("balcony", 6));
+        assertTrue(session.hasAvailableSeats("mezzanine", 3));
+        assertFalse(session.hasAvailableSeats("mezzanine", 4));
+        assertFalse(session.hasAvailableSeats("invalid", 1));
+    }
+    
+    @Test
+    public void testSessionBuyTickets() {
+        ru.theater.model.Session session = new ru.theater.model.Session(
+            play, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0), 10, 10, 10
+        );
+        
+        assertTrue(session.buyTickets("parterre", 5));
+        assertEquals(session.getFreeParterre(), Integer.valueOf(5));
+        
+        assertTrue(session.buyTickets("balcony", 4));
+        assertEquals(session.getFreeBalcony(), Integer.valueOf(6));
+        
+        assertTrue(session.buyTickets("mezzanine", 3));
+        assertEquals(session.getFreeMezzanine(), Integer.valueOf(7));
+        
+        assertFalse(session.buyTickets("invalid", 1));
+        assertFalse(session.buyTickets("parterre", 100));
+    }
+    
+    @Test
+    public void testSessionConstructorWithTheaterSeats() {
+        Theater localTheater = new Theater("Театр", "Адрес", 120, 80, 40);
+        Person localDirector = new Person("Режиссёр", PersonRole.DIRECTOR);
+        Play localPlay = new Play("Спектакль", localTheater, localDirector, 120, 1000, 800, 600);
+        
+        ru.theater.model.Session session = new ru.theater.model.Session(
+            localPlay, LocalDate.of(2024, 3, 15), LocalTime.of(19, 0)
+        );
+        
+        assertEquals(session.getPlay(), localPlay);
+        assertEquals(session.getFreeParterre(), Integer.valueOf(120));
+        assertEquals(session.getFreeBalcony(), Integer.valueOf(80));
+        assertEquals(session.getFreeMezzanine(), Integer.valueOf(40));
     }
 }

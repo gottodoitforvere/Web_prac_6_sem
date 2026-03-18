@@ -34,9 +34,7 @@ public abstract class BaseTest {
         try {
             Session session = HibernateUtil.getSessionFactory().getCurrentSession();
             tx = session.beginTransaction();
-            
             session.createNativeQuery("TRUNCATE TABLE play_actor, session, play, person, theater RESTART IDENTITY CASCADE").executeUpdate();
-            
             tx.commit();
         } catch (Exception e) {
             if (tx != null) tx.rollback();

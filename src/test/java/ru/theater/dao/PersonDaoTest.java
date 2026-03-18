@@ -4,6 +4,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import ru.theater.model.Person;
 import ru.theater.model.PersonRole;
+import ru.theater.model.Play;
+import ru.theater.model.Theater;
 
 import java.util.List;
 
@@ -62,10 +64,13 @@ public class PersonDaoTest extends BaseTest {
         
         assertNotNull(persons);
         assertEquals(persons.size(), 3);
+        assertTrue(persons.stream().anyMatch(p -> p.getName().equals("Персона 1")));
+        assertTrue(persons.stream().anyMatch(p -> p.getName().equals("Персона 2")));
+        assertTrue(persons.stream().anyMatch(p -> p.getName().equals("Персона 3")));
     }
     
     @Test
-    public void testFindByName() {
+    public void testFindByName_Found() {
         personDao.save(new Person("Александр Иванов", PersonRole.ACTOR));
         personDao.save(new Person("Мария Петрова", PersonRole.DIRECTOR));
         
@@ -74,10 +79,21 @@ public class PersonDaoTest extends BaseTest {
         assertNotNull(persons);
         assertEquals(persons.size(), 1);
         assertEquals(persons.get(0).getName(), "Александр Иванов");
+        assertEquals(persons.get(0).getRole(), PersonRole.ACTOR);
     }
     
     @Test
-    public void testFindByRole() {
+    public void testFindByName_NotFound() {
+        personDao.save(new Person("Иван", PersonRole.ACTOR));
+        
+        List<Person> persons = personDao.findByName("Несуществующий");
+        
+        assertNotNull(persons);
+        assertTrue(persons.isEmpty());
+    }
+    
+    @Test
+    public void testFindByRole_Found() {
         personDao.save(new Person("Актёр 1", PersonRole.ACTOR));
         personDao.save(new Person("Режиссёр 1", PersonRole.DIRECTOR));
         personDao.save(new Person("Актёр 2", PersonRole.ACTOR));
@@ -86,6 +102,17 @@ public class PersonDaoTest extends BaseTest {
         
         assertNotNull(actors);
         assertEquals(actors.size(), 2);
+        assertTrue(actors.stream().allMatch(p -> p.getRole() == PersonRole.ACTOR));
+    }
+    
+    @Test
+    public void testFindByRole_NotFound() {
+        personDao.save(new Person("Актёр", PersonRole.ACTOR));
+        
+        List<Person> persons = personDao.findByRole(PersonRole.BOTH);
+        
+        assertNotNull(persons);
+        assertTrue(persons.isEmpty());
     }
     
     @Test
@@ -97,7 +124,20 @@ public class PersonDaoTest extends BaseTest {
         List<Person> directors = personDao.findAllDirectors();
         
         assertNotNull(directors);
-        assertEquals(directors.size(), 2, "Должно быть 2 человека, которые могут быть режиссёрами");
+        assertEquals(directors.size(), 2);
+        assertTrue(directors.stream().allMatch(Person::canBeDirector));
+        assertTrue(directors.stream().anyMatch(p -> p.getRole() == PersonRole.DIRECTOR));
+        assertTrue(directors.stream().anyMatch(p -> p.getRole() == PersonRole.BOTH));
+    }
+    
+    @Test
+    public void testFindAllDirectors_Empty() {
+        personDao.save(new Person("Актёр", PersonRole.ACTOR));
+        
+        List<Person> directors = personDao.findAllDirectors();
+        
+        assertNotNull(directors);
+        assertTrue(directors.isEmpty());
     }
     
     @Test
@@ -109,7 +149,71 @@ public class PersonDaoTest extends BaseTest {
         List<Person> actors = personDao.findAllActors();
         
         assertNotNull(actors);
-        assertEquals(actors.size(), 2, "Должно быть 2 человека, которые могут быть актёрами");
+        assertEquals(actors.size(), 2);
+        assertTrue(actors.stream().allMatch(Person::canBeActor));
+        assertTrue(actors.stream().anyMatch(p -> p.getRole() == PersonRole.ACTOR));
+        assertTrue(actors.stream().anyMatch(p -> p.getRole() == PersonRole.BOTH));
+    }
+    
+    @Test
+    public void testFindAllActors_Empty() {
+        personDao.save(new Person("Режиссёр", PersonRole.DIRECTOR));
+        
+        List<Person> actors = personDao.findAllActors();
+        
+        assertNotNull(actors);
+        assertTrue(actors.isEmpty());
+    }
+    
+    @Test
+    public void testIsPersonInUse_NotUsed() {
+        Person person = new Person("Свободный", PersonRole.ACTOR);
+        personDao.save(person);
+        
+        boolean inUse = personDao.isPersonInUse(person.getId());
+        
+        assertFalse(inUse);
+    }
+    
+    @Test
+    public void testIsPersonInUse_AsDirector() {
+        TheaterDao theaterDao = new TheaterDao();
+        PlayDao playDao = new PlayDao();
+        
+        Theater theater = new Theater("Театр", "Адрес", 100, 50, 30);
+        theaterDao.save(theater);
+        
+        Person director = new Person("Режиссёр", PersonRole.DIRECTOR);
+        personDao.save(director);
+        
+        Play play = new Play("Спектакль", theater, director, 120, 1000, 800, 600);
+        playDao.save(play);
+        
+        boolean inUse = personDao.isPersonInUse(director.getId());
+        
+        assertTrue(inUse);
+    }
+    
+    @Test
+    public void testIsPersonInUse_AsActor() {
+        TheaterDao theaterDao = new TheaterDao();
+        PlayDao playDao = new PlayDao();
+        
+        Theater theater = new Theater("Театр", "Адрес", 100, 50, 30);
+        theaterDao.save(theater);
+        
+        Person director = new Person("Режиссёр", PersonRole.DIRECTOR);
+        Person actor = new Person("Актёр", PersonRole.ACTOR);
+        personDao.save(director);
+        personDao.save(actor);
+        
+        Play play = new Play("Спектакль", theater, director, 120, 1000, 800, 600);
+        play.addActor(actor);
+        playDao.save(play);
+        
+        boolean inUse = personDao.isPersonInUse(actor.getId());
+        
+        assertTrue(inUse);
     }
     
     @Test
