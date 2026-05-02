@@ -226,4 +226,114 @@ public class PlayDao extends AbstractDao<Play> {
         }
         return plays;
     }
+
+    @SuppressWarnings("unchecked")
+    public List<Play> findAllWithBasicDetails() {
+        Transaction tx = null;
+        List<Play> plays;
+        try {
+            Session session = getSession();
+            tx = session.beginTransaction();
+            Query<Play> query = session.createQuery(
+                "SELECT DISTINCT p FROM Play p " +
+                "JOIN FETCH p.theater " +
+                "JOIN FETCH p.director " +
+                "ORDER BY p.title",
+                Play.class
+            );
+            plays = query.list();
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            throw e;
+        }
+        return plays;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Play> findByTheaterIdWithBasicDetails(Long theaterId) {
+        Transaction tx = null;
+        List<Play> plays;
+        try {
+            Session session = getSession();
+            tx = session.beginTransaction();
+            Query<Play> query = session.createQuery(
+                "SELECT DISTINCT p FROM Play p " +
+                "JOIN FETCH p.theater " +
+                "JOIN FETCH p.director " +
+                "WHERE p.theater.id = :theaterId " +
+                "ORDER BY p.title",
+                Play.class
+            );
+            query.setParameter("theaterId", theaterId);
+            plays = query.list();
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            throw e;
+        }
+        return plays;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Play> findByFiltersWithBasicDetails(Long theaterId, Long directorId, Long actorId, LocalDate date) {
+        Transaction tx = null;
+        List<Play> plays;
+        try {
+            Session session = getSession();
+            tx = session.beginTransaction();
+
+            StringBuilder hql = new StringBuilder(
+                "SELECT DISTINCT p FROM Play p " +
+                "JOIN FETCH p.theater " +
+                "JOIN FETCH p.director "
+            );
+
+            if (actorId != null) {
+                hql.append("JOIN p.actors a ");
+            }
+            if (date != null) {
+                hql.append("JOIN p.sessions s ");
+            }
+
+            hql.append("WHERE 1=1 ");
+
+            if (theaterId != null) {
+                hql.append("AND p.theater.id = :theaterId ");
+            }
+            if (directorId != null) {
+                hql.append("AND p.director.id = :directorId ");
+            }
+            if (actorId != null) {
+                hql.append("AND a.id = :actorId ");
+            }
+            if (date != null) {
+                hql.append("AND s.sessionDate = :date ");
+            }
+
+            hql.append("ORDER BY p.title");
+
+            Query<Play> query = session.createQuery(hql.toString(), Play.class);
+
+            if (theaterId != null) {
+                query.setParameter("theaterId", theaterId);
+            }
+            if (directorId != null) {
+                query.setParameter("directorId", directorId);
+            }
+            if (actorId != null) {
+                query.setParameter("actorId", actorId);
+            }
+            if (date != null) {
+                query.setParameter("date", date);
+            }
+
+            plays = query.list();
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            throw e;
+        }
+        return plays;
+    }  
 }

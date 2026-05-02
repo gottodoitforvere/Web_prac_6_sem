@@ -177,4 +177,26 @@ public class SessionDao extends AbstractDao<ru.theater.model.Session> {
         }
         return success;
     }
+
+    public ru.theater.model.Session findByIdWithPlay(Long id) {
+        Transaction tx = null;
+        ru.theater.model.Session result = null;
+        try {
+            Session session = getSession();
+            tx = session.beginTransaction();
+            Query<ru.theater.model.Session> query = session.createQuery(
+                "SELECT s FROM Session s " +
+                "JOIN FETCH s.play p " +
+                "WHERE s.id = :id",
+                ru.theater.model.Session.class
+            );
+            query.setParameter("id", id);
+            result = query.uniqueResult();
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) tx.rollback();
+            throw e;
+        }
+        return result;
+    }
 }

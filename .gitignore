@@ -1,0 +1,23 @@
+# build artifacts
+build/
+test-output/
+system-test-output/
+
+# coverage
+coverage-report/
+coverage-report (2)/
+coverage-report.zip
+jacoco.exec
+
+# logs
+*.log
+geckodriver.log
+test-results.log
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# random files
+photo_2026-03-15_21-44-06.jpg

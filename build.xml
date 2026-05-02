@@ -1,81 +1,157 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="theater-box-office" default="help" basedir=".">
-    
-    <property name="src.dir" value="src/main/java"/>
-    <property name="test.src.dir" value="src/test/java"/>
-    <property name="build.dir" value="build/classes"/>
-    <property name="test.build.dir" value="build/test-classes"/>
-    <property name="lib.dir" value="lib"/>
-    <property name="resources.dir" value="resources"/>
-    <property name="coverage.dir" value="coverage-report"/>
-    
+
+    <!-- ============================================================ -->
+    <!-- Основные пути -->
+    <!-- ============================================================ -->
+    <property name="src.dir"                    value="src/main/java"/>
+    <property name="test.src.dir"               value="src/test/java"/>
+    <property name="system.test.src.dir"        value="src/test/java/ru/theater/system"/>
+    <property name="webapp.dir"                 value="src/main/webapp"/>
+    <property name="resources.dir"              value="resources"/>
+    <property name="lib.dir"                    value="lib"/>
+
+    <!-- build -->
+    <property name="build.dir"                  value="build/classes"/>
+    <property name="test.build.dir"             value="build/test-classes"/>
+    <property name="system.test.build.dir"      value="build/system-test-classes"/>
+    <property name="war.dir"                    value="build/war"/>
+
+    <!-- отчеты -->
+    <property name="test.output.dir"            value="test-output"/>
+    <property name="system.test.output.dir"     value="system-test-output"/>
+    <property name="coverage.dir"               value="coverage-report"/>
+    <property name="system.test.suite.file"     value="build/system-testng.xml"/>
+
+    <!-- WAR / Tomcat -->
+    <property name="war.name"                   value="theater.war"/>
+    <property name="tomcat.home"                value="/home/yury/tomcat9"/>
+    <property name="tomcat.webapps"             value="${tomcat.home}/webapps"/>
+
+    <!-- ============================================================ -->
+    <!-- Classpath -->
+    <!-- ============================================================ -->
     <path id="compile.classpath">
         <fileset dir="${lib.dir}">
             <include name="*.jar"/>
         </fileset>
     </path>
-    
+
     <path id="test.classpath">
         <path refid="compile.classpath"/>
         <pathelement location="${build.dir}"/>
         <pathelement location="${test.build.dir}"/>
+        <pathelement location="${system.test.build.dir}"/>
         <pathelement location="${resources.dir}"/>
     </path>
-    
+
     <path id="jacoco.classpath">
         <fileset dir="${lib.dir}">
             <include name="org.jacoco.*.jar"/>
             <include name="asm*.jar"/>
         </fileset>
     </path>
-    
+
     <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
         <classpath refid="jacoco.classpath"/>
     </taskdef>
-    
+
+    <!-- ============================================================ -->
+    <!-- Help -->
+    <!-- ============================================================ -->
     <target name="help">
-        <echo>Задачи: clean, compile, compile-test, test, coverage</echo>
+        <echo>Доступные задачи:</echo>
+        <echo>  clean               — очистить build-артефакты</echo>
+        <echo>  compile             — скомпилировать основной код</echo>
+        <echo>  compile-test        — скомпилировать unit-тесты</echo>
+        <echo>  test                — запустить unit-тесты (TestNG)</echo>
+        <echo>  coverage            — тесты + отчёт JaCoCo</echo>
+        <echo>  war                 — собрать WAR-файл</echo>
+        <echo>  deploy              — скопировать WAR в Tomcat</echo>
+        <echo>  undeploy            — удалить WAR из Tomcat</echo>
+        <echo>  redeploy            — пересобрать и задеплоить</echo>
+        <echo>  start-tomcat        — запустить Tomcat</echo>
+        <echo>  stop-tomcat         — остановить Tomcat</echo>
+        <echo>  compile-system-test — скомпилировать системные тесты</echo>
+        <echo>  system-test         — запустить системные тесты Selenium</echo>
     </target>
-    
+
+    <!-- ============================================================ -->
+    <!-- Clean -->
+    <!-- ============================================================ -->
     <target name="clean">
         <delete dir="${build.dir}"/>
         <delete dir="${test.build.dir}"/>
+        <delete dir="${system.test.build.dir}"/>
+        <delete dir="${war.dir}"/>
         <delete dir="${coverage.dir}"/>
+        <delete dir="${test.output.dir}"/>
+        <delete dir="${system.test.output.dir}"/>
+        <delete file="${system.test.suite.file}"/>
         <delete file="jacoco.exec"/>
+
         <mkdir dir="${build.dir}"/>
         <mkdir dir="${test.build.dir}"/>
+        <mkdir dir="${war.dir}"/>
     </target>
-    
+
+    <!-- ============================================================ -->
+    <!-- Compile main -->
+    <!-- ============================================================ -->
     <target name="compile" depends="clean">
-        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="compile.classpath" 
-               includeantruntime="false" encoding="UTF-8" debug="true"/>
+        <javac srcdir="${src.dir}"
+               destdir="${build.dir}"
+               classpathref="compile.classpath"
+               includeantruntime="false"
+               encoding="UTF-8"
+               debug="true"/>
         <echo>Код скомпилирован</echo>
     </target>
-    
+
+    <!-- ============================================================ -->
+    <!-- Compile unit tests -->
+    <!-- Важно: системные тесты здесь исключены -->
+    <!-- ============================================================ -->
     <target name="compile-test" depends="compile">
-        <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" classpathref="test.classpath" 
-               includeantruntime="false" encoding="UTF-8" debug="true"/>
-        <echo>Тесты скомпилированы</echo>
+        <javac srcdir="${test.src.dir}"
+               destdir="${test.build.dir}"
+               classpathref="test.classpath"
+               includeantruntime="false"
+               encoding="UTF-8"
+               debug="true">
+            <exclude name="ru/theater/system/**"/>
+        </javac>
+        <echo>Unit-тесты скомпилированы</echo>
     </target>
-    
+
+    <!-- ============================================================ -->
+    <!-- Unit tests -->
+    <!-- ============================================================ -->
     <target name="test" depends="compile-test">
         <taskdef resource="testngtasks" classpathref="compile.classpath"/>
-        <testng classpathref="test.classpath" outputDir="test-output">
+        <mkdir dir="${test.output.dir}"/>
+        <testng classpathref="test.classpath"
+                outputDir="${test.output.dir}"
+                haltonfailure="true">
             <classfileset dir="${test.build.dir}" includes="**/*Test.class"/>
         </testng>
+        <echo>Unit-тесты выполнены. Результаты: ${test.output.dir}</echo>
     </target>
-    
+
+    <!-- ============================================================ -->
+    <!-- Coverage for DAO/model tests -->
+    <!-- ============================================================ -->
     <target name="coverage" depends="compile-test" xmlns:jacoco="antlib:org.jacoco.ant">
         <taskdef resource="testngtasks" classpathref="compile.classpath"/>
-        
+
         <jacoco:coverage destfile="jacoco.exec">
-            <testng classpathref="test.classpath" outputDir="test-output">
+            <testng classpathref="test.classpath" outputDir="${test.output.dir}" haltonfailure="true">
                 <classfileset dir="${test.build.dir}" includes="**/*Test.class"/>
             </testng>
         </jacoco:coverage>
-        
+
         <mkdir dir="${coverage.dir}"/>
-        
+
         <jacoco:report>
             <executiondata>
                 <file file="jacoco.exec"/>
@@ -94,14 +170,169 @@
             <html destdir="${coverage.dir}"/>
             <csv destfile="${coverage.dir}/coverage.csv"/>
         </jacoco:report>
-        
-        <echo>=========================================</echo>
-        <echo>Отчет о покрытии: ${coverage.dir}/index.html</echo>
-        <echo>=========================================</echo>
+
+        <echo>Отчёт о покрытии: ${coverage.dir}/index.html</echo>
     </target>
-    
-    <target name="build" depends="compile, compile-test">
-        <echo>Проект собран</echo>
+
+    <!-- ============================================================ -->
+    <!-- WAR -->
+    <!-- ============================================================ -->
+    <target name="war" depends="compile">
+        <mkdir dir="${war.dir}"/>
+
+        <war destfile="${war.dir}/${war.name}"
+             webxml="${webapp.dir}/WEB-INF/web.xml">
+
+            <!-- WEB-ресурсы -->
+            <fileset dir="${webapp.dir}">
+                <exclude name="WEB-INF/web.xml"/>
+            </fileset>
+
+            <!-- Скомпилированные классы -->
+            <classes dir="${build.dir}"/>
+
+            <!-- resources -->
+            <classes dir="${resources.dir}"/>
+
+            <!-- Библиотеки, которые идут в WAR -->
+            <lib dir="${lib.dir}">
+                <!-- Hibernate -->
+                <include name="hibernate-core-*.jar"/>
+                <include name="hibernate-commons-annotations-*.jar"/>
+                <include name="antlr-*.jar"/>
+                <include name="dom4j-*.jar"/>
+                <include name="jandex-*.jar"/>
+                <include name="classmate-*.jar"/>
+                <include name="jboss-logging-*.jar"/>
+                <include name="byte-buddy-*.jar"/>
+                <include name="jaxb-api-*.jar"/>
+                <include name="jaxb-core-*.jar"/>
+                <include name="jaxb-impl-*.jar"/>
+                <include name="jaxb-runtime-*.jar"/>
+                <include name="javax.persistence-api-*.jar"/>
+                <include name="jta-*.jar"/>
+                <include name="activation-*.jar"/>
+
+                <!-- PostgreSQL -->
+                <include name="postgresql-*.jar"/>
+
+                <!-- Logging -->
+                <include name="slf4j-api-*.jar"/>
+                <include name="slf4j-simple-*.jar"/>
+
+                <!-- Spring -->
+                <include name="spring-webmvc-*.jar"/>
+                <include name="spring-web-*.jar"/>
+                <include name="spring-context-*.jar"/>
+                <include name="spring-core-*.jar"/>
+                <include name="spring-beans-*.jar"/>
+                <include name="spring-aop-*.jar"/>
+                <include name="spring-expression-*.jar"/>
+                <include name="spring-tx-*.jar"/>
+                <include name="spring-orm-*.jar"/>
+                <include name="commons-logging-*.jar"/>
+
+                <!-- JSTL -->
+                <include name="jstl-*.jar"/>
+            </lib>
+        </war>
+
+        <echo>WAR собран: ${war.dir}/${war.name}</echo>
     </target>
-    
+
+    <!-- ============================================================ -->
+    <!-- Deploy -->
+    <!-- ============================================================ -->
+    <target name="deploy" depends="war">
+        <copy file="${war.dir}/${war.name}"
+              todir="${tomcat.webapps}"
+              overwrite="true"/>
+        <echo>Задеплоено в ${tomcat.webapps}/${war.name}</echo>
+    </target>
+
+    <!-- ============================================================ -->
+    <!-- Undeploy -->
+    <!-- ============================================================ -->
+    <target name="undeploy">
+        <delete file="${tomcat.webapps}/${war.name}"/>
+        <delete dir="${tomcat.webapps}/theater"/>
+        <echo>WAR удалён из Tomcat</echo>
+    </target>
+
+    <!-- ============================================================ -->
+    <!-- Redeploy -->
+    <!-- ============================================================ -->
+    <target name="redeploy" depends="undeploy, deploy">
+        <echo>Переразвёртывание завершено</echo>
+    </target>
+
+    <!-- ============================================================ -->
+    <!-- Tomcat -->
+    <!-- ============================================================ -->
+    <target name="start-tomcat">
+        <exec executable="${tomcat.home}/bin/startup.sh">
+            <env key="JAVA_HOME" value="/usr/lib/jvm/java-21-openjdk-amd64"/>
+        </exec>
+        <echo>Tomcat запускается... http://localhost:8080/theater/</echo>
+    </target>
+
+    <target name="stop-tomcat">
+        <exec executable="${tomcat.home}/bin/shutdown.sh" failonerror="false">
+            <env key="JAVA_HOME" value="/usr/lib/jvm/java-21-openjdk-amd64"/>
+        </exec>
+        <echo>Tomcat останавливается...</echo>
+    </target>
+
+    <!-- ============================================================ -->
+    <!-- Compile system tests -->
+    <!-- ============================================================ -->
+    <target name="compile-system-test" depends="compile">
+        <mkdir dir="${system.test.build.dir}"/>
+        <javac srcdir="${system.test.src.dir}"
+               destdir="${system.test.build.dir}"
+               classpathref="test.classpath"
+               includeantruntime="false"
+               encoding="UTF-8"
+               debug="true"/>
+        <echo>Системные тесты скомпилированы</echo>
+    </target>
+
+    <!-- ============================================================ -->
+    <!-- Generate TestNG suite for system tests -->
+    <!-- ============================================================ -->
+    <target name="generate-system-test-suite">
+        <echo file="${system.test.suite.file}"><![CDATA[
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="System tests" verbose="2">
+    <test name="Selenium tests">
+        <classes>
+            <class name="ru.theater.system.TheaterSystemTest"/>
+            <class name="ru.theater.system.PlaySystemTest"/>
+            <class name="ru.theater.system.SessionSystemTest"/>
+            <class name="ru.theater.system.PersonSystemTest"/>
+        </classes>
+    </test>
+</suite>
+]]></echo>
+        <echo>Файл suite создан: ${system.test.suite.file}</echo>
+    </target>
+
+    <!-- ============================================================ -->
+    <!-- Run system tests in separate JVM -->
+    <!-- ============================================================ -->
+    <target name="system-test" depends="compile-system-test,generate-system-test-suite">
+        <mkdir dir="${system.test.output.dir}"/>
+
+        <java classname="org.testng.TestNG"
+              fork="true"
+              failonerror="true"
+              classpathref="test.classpath">
+            <arg value="-d"/>
+            <arg value="${system.test.output.dir}"/>
+            <arg value="${system.test.suite.file}"/>
+        </java>
+
+        <echo>Системные тесты выполнены. Результаты: ${system.test.output.dir}</echo>
+    </target>
+
 </project>
