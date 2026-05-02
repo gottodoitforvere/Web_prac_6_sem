@@ -48,8 +48,6 @@ public class PlaySystemTest extends BaseSeleniumTest {
             By.cssSelector("table tbody tr:first-child")
         );
         String rowText = firstRow.getText();
-
-        // В строке должны быть данные (название, театр, режиссёр)
         assertFalse(rowText.trim().isEmpty(),
             "Строка спектакля не должна быть пустой");
     }
@@ -101,8 +99,6 @@ public class PlaySystemTest extends BaseSeleniumTest {
     @Test
     public void testAddPlayEmptyTitle() {
         driver.get(BASE_URL + "/plays/new?theaterId=1");
-
-        // Не заполняем название
         Select directorSelect = new Select(
             driver.findElement(By.id("directorId"))
         );
@@ -155,9 +151,7 @@ public class PlaySystemTest extends BaseSeleniumTest {
 
     @Test
     public void testDeletePlaySuccess() {
-        // Добавляем спектакль
         driver.get(BASE_URL + "/plays/new?theaterId=1");
-
         driver.findElement(By.id("title")).sendKeys("Спектакль для удаления");
         Select directorSelect = new Select(driver.findElement(By.id("directorId")));
         directorSelect.selectByIndex(1);
@@ -173,7 +167,6 @@ public class PlaySystemTest extends BaseSeleniumTest {
 
         wait.until(ExpectedConditions.urlContains("/plays"));
 
-        // Находим строку со спектаклем
         List<WebElement> rows = driver.findElements(
             By.cssSelector("table tbody tr")
         );
@@ -186,7 +179,6 @@ public class PlaySystemTest extends BaseSeleniumTest {
         }
         assertNotNull(targetRow, "Добавленный спектакль должен быть в списке");
 
-        // Удаляем через JS
         WebElement deleteForm = targetRow.findElement(By.tagName("form"));
         org.openqa.selenium.JavascriptExecutor js =
             (org.openqa.selenium.JavascriptExecutor) driver;
@@ -197,7 +189,6 @@ public class PlaySystemTest extends BaseSeleniumTest {
 
         wait.until(ExpectedConditions.urlContains("/plays"));
 
-        // После редиректа проверяем что спектакль исчез
         String currentUrl = driver.getCurrentUrl();
         driver.get(currentUrl);
 

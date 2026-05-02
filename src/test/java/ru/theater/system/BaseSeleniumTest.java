@@ -34,7 +34,6 @@ public abstract class BaseSeleniumTest {
         FirefoxOptions options = new FirefoxOptions();
         options.setBinary(FIREFOX_BINARY_PATH);
         options.addArguments("-headless");
-        // Важно для обхода некоторых ограничений песочницы Linux:
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
 

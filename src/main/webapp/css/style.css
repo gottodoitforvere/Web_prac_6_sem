@@ -22,7 +22,6 @@ h1, h2 {
     color: #2c3e50;
 }
 
-/* Навигация */
 nav {
     background-color: #2c3e50;
     padding: 10px 20px;
@@ -39,7 +38,6 @@ nav a:hover {
     text-decoration: underline;
 }
 
-/* Сообщения */
 .message {
     background-color: #d4edda;
     color: #155724;
@@ -58,7 +56,6 @@ nav a:hover {
     margin-bottom: 16px;
 }
 
-/* Таблицы */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -82,7 +79,6 @@ tr:hover {
     background-color: #f0f0f0;
 }
 
-/* Кнопки */
 .btn {
     display: inline-block;
     padding: 7px 14px;
@@ -138,7 +134,6 @@ tr:hover {
     background-color: #6c7a7b;
 }
 
-/* Формы */
 .form-container {
     background-color: #fff;
     padding: 24px;
@@ -206,7 +201,6 @@ tr:hover {
     gap: 10px;
 }
 
-/* Фильтры */
 .filters {
     background-color: #fff;
     padding: 16px;
@@ -238,7 +232,6 @@ tr:hover {
     min-width: 160px;
 }
 
-/* Блок информации о спектакле */
 .play-info {
     background-color: #fff;
     padding: 16px;
@@ -255,7 +248,6 @@ tr:hover {
     display: inline-block;
 }
 
-/* Блок покупки */
 .buy-form {
     background-color: #eaf4fb;
     padding: 14px;

@@ -24,7 +24,6 @@ public class SessionSystemTest extends BaseSeleniumTest {
 
     @Test
     public void testSessionListLoads() {
-        // Спектакль с id=1 есть в init.sql
         driver.get(BASE_URL + "/sessions?playId=1");
 
         wait.until(ExpectedConditions.urlContains("/sessions"));
@@ -43,8 +42,6 @@ public class SessionSystemTest extends BaseSeleniumTest {
     @Test
     public void testSessionPageShowsPlayInfo() {
         driver.get(BASE_URL + "/sessions?playId=1");
-
-        // Страница должна показывать информацию о спектакле
         WebElement playInfo = driver.findElement(By.className("play-info"));
         String infoText = playInfo.getText();
 
@@ -66,13 +63,10 @@ public class SessionSystemTest extends BaseSeleniumTest {
     public void testBuyTicketsSuccess() {
         driver.get(BASE_URL + "/sessions?playId=1");
 
-        // Запоминаем количество мест до покупки
         WebElement firstRow = driver.findElement(
             By.cssSelector("table tbody tr:first-child")
         );
         String beforeText = firstRow.getText();
-
-        // Выбираем партер, 1 билет
         WebElement form = firstRow.findElement(
             By.cssSelector("form")
         );
@@ -95,8 +89,6 @@ public class SessionSystemTest extends BaseSeleniumTest {
         );
         assertTrue(message.getText().contains("успешно выполнена"),
             "Должно быть сообщение об успешной покупке");
-
-        // Проверяем что количество мест уменьшилось
         WebElement updatedRow = driver.findElement(
             By.cssSelector("table tbody tr:first-child")
         );
@@ -119,8 +111,6 @@ public class SessionSystemTest extends BaseSeleniumTest {
             form.findElement(By.name("seatType"))
         );
         seatTypeSelect.selectByValue("parterre");
-
-        // Пробуем купить больше мест чем есть
         WebElement countInput = form.findElement(By.name("count"));
         countInput.clear();
         countInput.sendKeys("99999");
@@ -174,13 +164,10 @@ public class SessionSystemTest extends BaseSeleniumTest {
         driver.findElement(By.cssSelector("button[type='submit']")).click();
 
         wait.until(ExpectedConditions.urlContains("/sessions"));
-
-        // Свободные места должны автоматически заполниться из данных театра
         String pageText = driver.findElement(By.tagName("body")).getText();
         assertTrue(pageText.contains("2025-11-30"),
             "Новый сеанс должен появиться в списке");
 
-        // Находим строку нового сеанса и проверяем что места не 0
         List<WebElement> rows = driver.findElements(
             By.cssSelector("table tbody tr")
         );
@@ -201,15 +188,12 @@ public class SessionSystemTest extends BaseSeleniumTest {
 
     @Test
     public void testDeleteSessionSuccess() {
-        // Добавляем сеанс
         driver.get(BASE_URL + "/sessions/new?playId=1");
         driver.findElement(By.id("sessionDate")).sendKeys("2025-10-10");
         driver.findElement(By.id("sessionTime")).sendKeys("20:00");
         driver.findElement(By.cssSelector("button[type='submit']")).click();
 
         wait.until(ExpectedConditions.urlContains("/sessions"));
-
-        // Находим строку с нашим сеансом
         List<WebElement> rows = driver.findElements(
             By.cssSelector("table tbody tr")
         );
@@ -221,8 +205,6 @@ public class SessionSystemTest extends BaseSeleniumTest {
             }
         }
         assertNotNull(targetRow, "Добавленный сеанс должен быть в списке");
-
-        // Удаляем через JS — берём последнюю форму в строке (форма удаления)
         List<WebElement> forms = targetRow.findElements(By.tagName("form"));
         WebElement deleteForm = forms.get(forms.size() - 1);
 
@@ -235,7 +217,6 @@ public class SessionSystemTest extends BaseSeleniumTest {
 
         wait.until(ExpectedConditions.urlContains("/sessions"));
 
-        // После редиректа проверяем что сеанс исчез
         String currentUrl = driver.getCurrentUrl();
         driver.get(currentUrl);
 

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="theater-box-office" default="help" basedir=".">
 
-    <!-- ============================================================ -->
-    <!-- Основные пути -->
-    <!-- ============================================================ -->
     <property name="src.dir"                    value="src/main/java"/>
     <property name="test.src.dir"               value="src/test/java"/>
     <property name="system.test.src.dir"        value="src/test/java/ru/theater/system"/>
@@ -11,26 +8,20 @@
     <property name="resources.dir"              value="resources"/>
     <property name="lib.dir"                    value="lib"/>
 
-    <!-- build -->
     <property name="build.dir"                  value="build/classes"/>
     <property name="test.build.dir"             value="build/test-classes"/>
     <property name="system.test.build.dir"      value="build/system-test-classes"/>
     <property name="war.dir"                    value="build/war"/>
 
-    <!-- отчеты -->
     <property name="test.output.dir"            value="test-output"/>
     <property name="system.test.output.dir"     value="system-test-output"/>
     <property name="coverage.dir"               value="coverage-report"/>
     <property name="system.test.suite.file"     value="build/system-testng.xml"/>
 
-    <!-- WAR / Tomcat -->
     <property name="war.name"                   value="theater.war"/>
     <property name="tomcat.home"                value="/home/yury/tomcat9"/>
     <property name="tomcat.webapps"             value="${tomcat.home}/webapps"/>
 
-    <!-- ============================================================ -->
-    <!-- Classpath -->
-    <!-- ============================================================ -->
     <path id="compile.classpath">
         <fileset dir="${lib.dir}">
             <include name="*.jar"/>
@@ -56,9 +47,6 @@
         <classpath refid="jacoco.classpath"/>
     </taskdef>
 
-    <!-- ============================================================ -->
-    <!-- Help -->
-    <!-- ============================================================ -->
     <target name="help">
         <echo>Доступные задачи:</echo>
         <echo>  clean               — очистить build-артефакты</echo>
@@ -76,9 +64,6 @@
         <echo>  system-test         — запустить системные тесты Selenium</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Clean -->
-    <!-- ============================================================ -->
     <target name="clean">
         <delete dir="${build.dir}"/>
         <delete dir="${test.build.dir}"/>
@@ -95,9 +80,6 @@
         <mkdir dir="${war.dir}"/>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Compile main -->
-    <!-- ============================================================ -->
     <target name="compile" depends="clean">
         <javac srcdir="${src.dir}"
                destdir="${build.dir}"
@@ -108,10 +90,6 @@
         <echo>Код скомпилирован</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Compile unit tests -->
-    <!-- Важно: системные тесты здесь исключены -->
-    <!-- ============================================================ -->
     <target name="compile-test" depends="compile">
         <javac srcdir="${test.src.dir}"
                destdir="${test.build.dir}"
@@ -124,9 +102,6 @@
         <echo>Unit-тесты скомпилированы</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Unit tests -->
-    <!-- ============================================================ -->
     <target name="test" depends="compile-test">
         <taskdef resource="testngtasks" classpathref="compile.classpath"/>
         <mkdir dir="${test.output.dir}"/>
@@ -138,9 +113,6 @@
         <echo>Unit-тесты выполнены. Результаты: ${test.output.dir}</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Coverage for DAO/model tests -->
-    <!-- ============================================================ -->
     <target name="coverage" depends="compile-test" xmlns:jacoco="antlib:org.jacoco.ant">
         <taskdef resource="testngtasks" classpathref="compile.classpath"/>
 
@@ -174,29 +146,21 @@
         <echo>Отчёт о покрытии: ${coverage.dir}/index.html</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- WAR -->
-    <!-- ============================================================ -->
     <target name="war" depends="compile">
         <mkdir dir="${war.dir}"/>
 
         <war destfile="${war.dir}/${war.name}"
              webxml="${webapp.dir}/WEB-INF/web.xml">
 
-            <!-- WEB-ресурсы -->
             <fileset dir="${webapp.dir}">
                 <exclude name="WEB-INF/web.xml"/>
             </fileset>
 
-            <!-- Скомпилированные классы -->
             <classes dir="${build.dir}"/>
 
-            <!-- resources -->
             <classes dir="${resources.dir}"/>
 
-            <!-- Библиотеки, которые идут в WAR -->
             <lib dir="${lib.dir}">
-                <!-- Hibernate -->
                 <include name="hibernate-core-*.jar"/>
                 <include name="hibernate-commons-annotations-*.jar"/>
                 <include name="antlr-*.jar"/>
@@ -213,14 +177,11 @@
                 <include name="jta-*.jar"/>
                 <include name="activation-*.jar"/>
 
-                <!-- PostgreSQL -->
                 <include name="postgresql-*.jar"/>
 
-                <!-- Logging -->
                 <include name="slf4j-api-*.jar"/>
                 <include name="slf4j-simple-*.jar"/>
 
-                <!-- Spring -->
                 <include name="spring-webmvc-*.jar"/>
                 <include name="spring-web-*.jar"/>
                 <include name="spring-context-*.jar"/>
@@ -232,7 +193,6 @@
                 <include name="spring-orm-*.jar"/>
                 <include name="commons-logging-*.jar"/>
 
-                <!-- JSTL -->
                 <include name="jstl-*.jar"/>
             </lib>
         </war>
@@ -240,9 +200,6 @@
         <echo>WAR собран: ${war.dir}/${war.name}</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Deploy -->
-    <!-- ============================================================ -->
     <target name="deploy" depends="war">
         <copy file="${war.dir}/${war.name}"
               todir="${tomcat.webapps}"
@@ -250,25 +207,16 @@
         <echo>Задеплоено в ${tomcat.webapps}/${war.name}</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Undeploy -->
-    <!-- ============================================================ -->
     <target name="undeploy">
         <delete file="${tomcat.webapps}/${war.name}"/>
         <delete dir="${tomcat.webapps}/theater"/>
         <echo>WAR удалён из Tomcat</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Redeploy -->
-    <!-- ============================================================ -->
     <target name="redeploy" depends="undeploy, deploy">
         <echo>Переразвёртывание завершено</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Tomcat -->
-    <!-- ============================================================ -->
     <target name="start-tomcat">
         <exec executable="${tomcat.home}/bin/startup.sh">
             <env key="JAVA_HOME" value="/usr/lib/jvm/java-21-openjdk-amd64"/>
@@ -283,9 +231,6 @@
         <echo>Tomcat останавливается...</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Compile system tests -->
-    <!-- ============================================================ -->
     <target name="compile-system-test" depends="compile">
         <mkdir dir="${system.test.build.dir}"/>
         <javac srcdir="${system.test.src.dir}"
@@ -297,9 +242,6 @@
         <echo>Системные тесты скомпилированы</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Generate TestNG suite for system tests -->
-    <!-- ============================================================ -->
     <target name="generate-system-test-suite">
         <echo file="${system.test.suite.file}"><![CDATA[
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
@@ -317,9 +259,6 @@
         <echo>Файл suite создан: ${system.test.suite.file}</echo>
     </target>
 
-    <!-- ============================================================ -->
-    <!-- Run system tests in separate JVM -->
-    <!-- ============================================================ -->
     <target name="system-test" depends="compile-system-test,generate-system-test-suite">
         <mkdir dir="${system.test.output.dir}"/>
 

@@ -254,9 +254,6 @@ public class TheaterSystemTest extends BaseSeleniumTest {
     @Test
     public void testDeleteTheaterWithPlaysShowsError() {
         driver.get(BASE_URL + "/theaters");
-
-        // Получаем форму удаления первого театра
-        // Первый театр из init.sql (Большой театр) имеет спектакли
         WebElement firstRow = driver.findElement(
             By.cssSelector("table tbody tr:first-child")
         );
@@ -268,11 +265,8 @@ public class TheaterSystemTest extends BaseSeleniumTest {
             "arguments[0].onsubmit = function(){ return true; }; arguments[0].submit();",
             deleteForm
         );
-
-        // Ждём загрузки страницы после POST + redirect
         wait.until(ExpectedConditions.urlContains("/theaters"));
 
-        // Ждём появления сообщения об ошибке
         WebElement error = wait.until(
             ExpectedConditions.presenceOfElementLocated(By.className("error"))
         );
@@ -286,7 +280,6 @@ public class TheaterSystemTest extends BaseSeleniumTest {
 
     @Test
     public void testDeleteTheaterSuccess() {
-        // Добавляем театр без спектаклей
         driver.get(BASE_URL + "/theaters/new");
         driver.findElement(By.id("name")).sendKeys("ТеатрДляУдаления123");
         driver.findElement(By.id("address")).sendKeys("ул. Временная, 99");
@@ -297,18 +290,14 @@ public class TheaterSystemTest extends BaseSeleniumTest {
         driver.findElement(By.id("seatsMezzanine")).clear();
         driver.findElement(By.id("seatsMezzanine")).sendKeys("10");
         driver.findElement(By.cssSelector("button[type='submit']")).click();
-
-        // После добавления мы уже на странице /theaters с flash-сообщением
         wait.until(ExpectedConditions.urlContains("/theaters"));
 
-        // Страница уже загружена — ищем театр в текущем DOM
         String pageAfterAdd = driver.findElement(By.tagName("body")).getText();
         assertTrue(
             pageAfterAdd.contains("ТеатрДляУдаления123"),
             "Добавленный театр должен быть виден на странице"
         );
 
-        // Находим строку с нашим театром
         List<WebElement> rows = driver.findElements(
             By.cssSelector("table tbody tr")
         );
@@ -321,7 +310,6 @@ public class TheaterSystemTest extends BaseSeleniumTest {
         }
         assertNotNull(targetRow, "Добавленный театр должен быть в списке");
 
-        // Сабмитим форму удаления
         WebElement deleteForm = targetRow.findElement(By.tagName("form"));
         org.openqa.selenium.JavascriptExecutor js =
             (org.openqa.selenium.JavascriptExecutor) driver;
@@ -330,10 +318,8 @@ public class TheaterSystemTest extends BaseSeleniumTest {
             deleteForm
         );
 
-        // Ждём редиректа — читаем страницу СРАЗУ
         wait.until(ExpectedConditions.urlContains("/theaters"));
 
-        // Ждём появления сообщения об успехе — перезапрашиваем элемент
         String pageText = wait.until(driver2 -> {
             List<WebElement> msgs = driver2.findElements(By.className("message"));
             if (!msgs.isEmpty() && msgs.get(0).getText().contains("успешно удалён")) {
@@ -347,7 +333,6 @@ public class TheaterSystemTest extends BaseSeleniumTest {
             "Должно быть сообщение об успешном удалении"
         );
 
-        // Проверяем что театр исчез из списка
         String bodyText = driver.findElement(By.tagName("body")).getText();
         assertFalse(
             bodyText.contains("ТеатрДляУдаления123"),

@@ -36,7 +36,6 @@ public class TheaterController {
         return "theater/list";
     }
 
-    // Обработка фильтрации — перенаправляет на страницу спектаклей
     @GetMapping("/search")
     public String search(
             @RequestParam(value = "directorId", required = false) Long directorId,

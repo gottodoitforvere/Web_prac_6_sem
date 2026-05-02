@@ -195,24 +195,20 @@ public class PersonSystemTest extends BaseSeleniumTest {
 
     @Test
     public void testDeletePersonSuccess() {
-        // Добавляем персону
         driver.get(BASE_URL + "/persons/new");
         driver.findElement(By.id("name")).sendKeys("УникальнаяПерсонаДляУдаления");
         Select roleSelect = new Select(driver.findElement(By.id("role")));
         roleSelect.selectByValue("ACTOR");
         driver.findElement(By.cssSelector("button[type='submit']")).click();
 
-        // Ждём редиректа после добавления
         wait.until(ExpectedConditions.urlContains("/persons"));
 
-        // Проверяем что персона добавлена
         String pageAfterAdd = driver.findElement(By.tagName("body")).getText();
         assertTrue(
             pageAfterAdd.contains("УникальнаяПерсонаДляУдаления"),
             "Добавленная персона должна быть видна на странице"
         );
 
-        // Находим строку с нашей персоной
         List<WebElement> rows = driver.findElements(
             By.cssSelector("table tbody tr")
         );
@@ -225,22 +221,17 @@ public class PersonSystemTest extends BaseSeleniumTest {
         }
         assertNotNull(targetRow, "Добавленная персона должна быть в списке");
 
-        // Получаем id персоны из кнопки редактирования
         WebElement editBtn = targetRow.findElement(By.cssSelector(".btn-warning"));
         String editHref = editBtn.getAttribute("href");
         String personId = editHref.substring(editHref.lastIndexOf("=") + 1);
 
-        // Переходим на чистую страницу персон без flash-сообщения
-        // чтобы после удаления flash не путался со старым
         driver.get(BASE_URL + "/persons");
         wait.until(ExpectedConditions.urlContains("/persons"));
 
-        // Убеждаемся что на странице НЕТ никакого flash-сообщения
         wait.until(driver2 ->
             driver2.findElements(By.className("message")).isEmpty()
         );
 
-        // Сабмитим форму удаления через JavaScript
         org.openqa.selenium.JavascriptExecutor js =
             (org.openqa.selenium.JavascriptExecutor) driver;
 
@@ -257,10 +248,8 @@ public class PersonSystemTest extends BaseSeleniumTest {
             "form.submit();"
         );
 
-        // Ждём редиректа на страницу персон
         wait.until(ExpectedConditions.urlContains("/persons"));
 
-        // Ждём появления сообщения об успешном удалении
         WebElement message = wait.until(
             ExpectedConditions.presenceOfElementLocated(By.className("message"))
         );
@@ -271,7 +260,6 @@ public class PersonSystemTest extends BaseSeleniumTest {
             "Должно быть сообщение об успешном удалении. Получено: " + messageText
         );
 
-        // Проверяем что персона исчезла из списка
         String bodyText = driver.findElement(By.tagName("body")).getText();
         assertFalse(
             bodyText.contains("УникальнаяПерсонаДляУдаления"),
